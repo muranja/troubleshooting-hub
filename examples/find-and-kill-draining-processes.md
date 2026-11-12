@@ -60,10 +60,11 @@ systemctl --user stop <unit-or-scope-name>
 sudo systemctl stop <service-name>
 ```
 
-Always preview pattern matches before using `pkill`:
+Always preview pattern matches first, and use a bracketed regex (`[p]attern`) or explicit numeric PIDs so `pkill -f` never matches and kills its own `bash -c` shell:
 ```bash
-pgrep -af <pattern>
-pkill -TERM -f <pattern>
+pgrep -af '[p]attern'
+PIDS=$(pgrep -f '[p]attern')
+[ -n "$PIDS" ] && kill -TERM $PIDS
 ```
 
 ## Verification
@@ -72,3 +73,4 @@ Re-run `ps` and `free -h` to confirm the PID is gone and CPU/memory pressure dro
 ps -fp <PID> || echo "Process stopped"
 free -h
 ```
+
