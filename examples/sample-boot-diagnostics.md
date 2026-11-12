@@ -23,3 +23,4 @@ Background processes on modern Linux can be initiated by user `systemd` units, t
 | 6 | Application-specific logs | Reveals internal commands executed inside a parent app or runner |
 | 7 | Application state DB / config (read-only) | Explains *why* the parent app executed that command (e.g., resumed task vs. schedule) |
 | 8 | Final `ps -ef` verification | Confirms live process state after cleanup or remediation |
+

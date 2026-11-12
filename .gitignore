@@ -19,17 +19,17 @@ boot-and-startup/
 network-and-ports/
 systemd-and-services/
 build-and-deploy/
+app-debugging/
 local/
 personal/
 private/
 notes/
 
-# Whitelist public tool docs, templates, generic examples, and skill definition
+# Whitelist public tool docs, templates, generic examples, and skill package
 !README.md
 !templates/
 !templates/TEMPLATE.md
 !examples/
 !examples/*.md
 !skill/
-!skill/**/
-!skill/**/*.md
+!skill/**

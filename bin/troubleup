@@ -77,3 +77,4 @@ fi
 echo "✅ Troubleshooting Hub is up (local-only) on http://$HOST:$PORT/"
 echo "   Serving $TROUBLE_DIR (pid $SERVER_PID)"
 echo "   Log: $LOG"
+
