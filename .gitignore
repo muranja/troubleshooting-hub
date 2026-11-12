@@ -1,17 +1,3 @@
-# Python & editor artifacts
-__pycache__/
-*.py[cod]
-*.pyo
-.venv/
-.pytest_cache/
-.ruff_cache/
-.DS_Store
-
-# Runtime generated manifest, logs, and state
-files.json
-*.log
-*.state
-
 # Ignore all personal troubleshooting markdown entries & local folders by default
 *.md
 **/*.md
@@ -33,3 +19,16 @@ notes/
 !examples/*.md
 !skill/
 !skill/**
+
+# Python, editor, and runtime artifacts (always ignored, including inside skill/)
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+.pytest_cache/
+.ruff_cache/
+.DS_Store
+files.json
+*.log
+*.state
