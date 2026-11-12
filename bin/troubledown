@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# troubledown — stop the local Troubleshooting Hub server started by 'troubleup'.
+set -u
+
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/troubleshooting"
+STATE="$STATE_DIR/mode.state"
+
+if [ ! -f "$STATE" ]; then
+    echo "ℹ️  Troubleshooting Hub is not running (no state file)."
+    exit 0
+fi
+
+# shellcheck disable=SC1090
+. "$STATE"
+
+stop_pid() {
+    local pid="$1" name="$2"
+    [ -n "$pid" ] || return 0
+    kill -0 "$pid" 2>/dev/null || return 0
+
+    kill -TERM "$pid" 2>/dev/null
+    for _ in 1 2 3 4 5 6 7 8 9 10; do
+        kill -0 "$pid" 2>/dev/null || { echo "🛑 Stopped $name (pid $pid)"; return 0; }
+        sleep 0.3
+    done
+
+    kill -KILL "$pid" 2>/dev/null
+    sleep 0.4
+    if kill -0 "$pid" 2>/dev/null; then
+        echo "❌ Could not stop $name (pid $pid)"
+        return 1
+    fi
+    echo "🛑 Stopped $name (pid $pid, forced)"
+}
+
+status=0
+stop_pid "${server_pid:-}" "troubleshooting server" || status=1
+[ -n "${port:-}" ] && pkill -f "server.py.*--port ${port}" 2>/dev/null
+
+if [ $status -eq 0 ]; then
+    rm -f "$STATE"
+    echo "✅ Troubleshooting Hub is stopped."
+else
+    echo "⚠️  Process still running; state file kept at $STATE"
+fi
+
+exit $status

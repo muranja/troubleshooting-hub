@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+# troubleup — launch the local-only Troubleshooting Hub web renderer.
+set -u
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEFAULT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+TROUBLE_DIR="${TROUBLE_DIR:-$DEFAULT_DIR}"
+PORT="${TROUBLE_PORT:-8898}"
+HOST="${TROUBLE_HOST:-127.0.0.1}"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/troubleshooting"
+STATE="$STATE_DIR/mode.state"
+LOG_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/troubleshooting"
+LOG="$LOG_DIR/troubleup.log"
+mkdir -p "$STATE_DIR" "$LOG_DIR"
+
+port_open() {
+    python3 - "$HOST" "$1" <<'PY'
+import socket, sys
+s = socket.socket()
+s.settimeout(0.3)
+sys.exit(0 if s.connect_ex((sys.argv[1], int(sys.argv[2]))) == 0 else 1)
+PY
+}
+
+if [ ! -d "$TROUBLE_DIR" ] || [ ! -f "$TROUBLE_DIR/server.py" ]; then
+    echo "❌ Troubleshooting directory or server.py not found: $TROUBLE_DIR" >&2
+    exit 1
+fi
+
+if [ -f "$STATE" ]; then
+    # shellcheck disable=SC1090
+    . "$STATE"
+    if [ -n "${server_pid:-}" ] && kill -0 "$server_pid" 2>/dev/null; then
+        echo "✅ Troubleshooting Hub is already running on http://${host:-$HOST}:${port:-$PORT}/"
+        echo "   Run 'troubledown' to stop it."
+        exit 0
+    fi
+    rm -f "$STATE"
+fi
+
+if port_open "$PORT"; then
+    echo "❌ Port $PORT is already in use. Try: TROUBLE_PORT=8897 troubleup" >&2
+    exit 1
+fi
+
+EXTRA_ARGS=()
+if [ -n "${TROUBLE_EXTRA_DIRS:-}" ]; then
+    IFS=':' read -r -a _extra_list <<< "$TROUBLE_EXTRA_DIRS"
+    for dir in "${_extra_list[@]}"; do
+        [ -d "$dir" ] && EXTRA_ARGS+=(--extra-dir "$dir")
+    done
+fi
+
+nohup python3 "$TROUBLE_DIR/server.py" \
+    --host "$HOST" \
+    --port "$PORT" \
+    --dir "$TROUBLE_DIR" \
+    "${EXTRA_ARGS[@]}" \
+    >> "$LOG" 2>&1 &
+SERVER_PID=$!
+
+sleep 1
+if ! kill -0 "$SERVER_PID" 2>/dev/null || ! port_open "$PORT"; then
+    echo "❌ Troubleshooting Hub failed to start. See $LOG" >&2
+    kill "$SERVER_PID" 2>/dev/null
+    exit 1
+fi
+
+{
+    echo "server_pid=$SERVER_PID"
+    echo "host=$HOST"
+    echo "port=$PORT"
+    echo "dir=$TROUBLE_DIR"
+    echo "started=$(date -Is)"
+} > "$STATE"
+
+echo "✅ Troubleshooting Hub is up (local-only) on http://$HOST:$PORT/"
+echo "   Serving $TROUBLE_DIR (pid $SERVER_PID)"
+echo "   Log: $LOG"
