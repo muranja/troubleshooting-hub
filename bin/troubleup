@@ -51,12 +51,12 @@ if [ -n "${TROUBLE_EXTRA_DIRS:-}" ]; then
     done
 fi
 
-nohup python3 "$TROUBLE_DIR/server.py" \
+setsid nohup python3 "$TROUBLE_DIR/server.py" \
     --host "$HOST" \
     --port "$PORT" \
     --dir "$TROUBLE_DIR" \
     "${EXTRA_ARGS[@]}" \
-    >> "$LOG" 2>&1 &
+    </dev/null >> "$LOG" 2>&1 &
 SERVER_PID=$!
 
 sleep 1
